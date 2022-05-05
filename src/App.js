@@ -1,61 +1,101 @@
 import { motion, useDragControls, useMotionValue } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+// import useSize from "@react-hook/size";
+import useResizeObserver from "@react-hook/resize-observer";
+
+import useMeasure from "react-use-measure";
+
+let useBounds = (target) => {
+  let [size, setSize] = useState();
+
+  useLayoutEffect(() => {
+    setSize(target.current.getBoundingClientRect());
+  }, [target]);
+
+  // Where the magic happens
+  useResizeObserver(target, (entry) => setSize(entry.contentRect));
+  return size;
+};
 
 export default function App() {
-  let [progress, setProgress] = useState(100);
-  let min = 0;
-  let max = 200;
+  let [one, setOne] = useState(0);
+  let [two, setTwo] = useState(30);
 
   return (
-    <div className="p-8 w-80">
-      <div className="flex justify-between mb-4">
-        <span className="border-l border-green-500">{min}</span>
-        <span className="border-r border-green-500">{max}</span>
-      </div>
-
-      <Slider min={min} max={max} value={progress} onChange={setProgress} />
-
-      <div className="mt-8">
-        <p>Current: {Math.floor(progress * 10) / 10}</p>
-      </div>
-      <div>
-        <button onClick={() => setProgress(50)}>Set to 50</button>
+    <div>
+      <div className="px-8 mt-10">
+        <Slider min={0} max={10} value={one} onChange={setOne} />
+        <p>{one}</p>
+        <Slider min={0} max={100} value={two} onChange={setTwo} />
+        <p>{two}</p>
       </div>
     </div>
   );
+
+  // let [progress, setProgress] = useState(100);
+  // let min = 0;
+  // let max = 400;
+
+  // return (
+  //   <div className="p-2 bg-blue-100 h-[400px] overflow-y-scroll">
+  //     <div className="w-full px-8 py-8">
+  //       <div className="flex justify-between mb-4">
+  //         <span className="border-l border-green-500">{min}</span>
+  //         <span className="border-r border-green-500">{max}</span>
+  //       </div>
+  //       <Slider min={min} max={max} value={progress} onChange={setProgress} />
+  //       <div className="mt-8">
+  //         <p>Current: {Math.floor(progress * 10) / 10}</p>
+  //       </div>
+  //       <div>
+  //         <button onClick={() => setProgress(50)}>Set to 50</button>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
 }
 
-/*
-  Details / requirements:
-    - Can add padding to handle without breaking calculations
-    - Constraints work
-    - Drag controls work
-    - Can go from clicking on drag controls to dragging
-    - While dragging handle, can move cursor down/up off the handle element
-    - Resilient to resize?
-*/
 function Slider({ min, max, value, onChange }) {
-  let constraintsRef = useRef();
-  let fullBarRef = useRef();
-  let buttonSize = 10;
-  let scrubberX = useMotionValue();
+  let handleRef = useRef();
+  let buttonSize = 60;
+  let handleX = useMotionValue();
   let dragControls = useDragControls();
+  // let [fullBarRef, fullBarBounds] = useMeasure();
+  let fullBarRef = useRef();
+  let fullBarBounds = useBounds(fullBarRef);
+  let handleBounds = useBounds(handleRef);
+  let fullBarWidth = fullBarBounds?.width;
 
-  function handleDrag(event) {
-    let { left, width } = fullBarRef.current.getBoundingClientRect();
-    let position = event.pageX - left;
-    let newProgress = clamp(position, 0, width) / width;
+  function handleDrag() {
+    // Old
+    // let { left, width } = fullBarRef.current.getBoundingClientRect();
+    // let position = event.pageX - left;
+    // let newProgress = clamp(position, 0, width) / width;
+    // onChange(newProgress * (max - min));
+
+    // New
+    let handleBounds = handleRef.current.getBoundingClientRect();
+    // console.log({ handleBounds });
+    let middleOfHandle = handleBounds.x + handleBounds.width / 2;
+    // console.log({ middleOfHandle });
+    // let newProgress = getProgressFromX({
+    //   containerRef: fullBarRef,
+    //   x: middleOfHandle,
+    // });
+
+    let newProgress = (middleOfHandle - 0) / fullBarWidth;
+
     onChange(newProgress * (max - min));
   }
 
-  useEffect(() => {
-    let { width } = fullBarRef.current.getBoundingClientRect();
+  useLayoutEffect(() => {
     let newProgress = value / (max - min);
-    let newX = newProgress * width;
-    if (scrubberX.get() !== newX) {
-      scrubberX.set(newProgress * width);
+    let newX = newProgress * fullBarWidth;
+
+    if (handleX.get() !== newX) {
+      handleX.set(newProgress * fullBarWidth);
     }
-  }, [value, scrubberX, max, min]);
+  }, [value, handleX, max, min, fullBarWidth]);
 
   return (
     <div
@@ -65,7 +105,6 @@ function Slider({ min, max, value, onChange }) {
     >
       <div
         data-test="slider-constraints"
-        ref={constraintsRef}
         className="absolute inset-x-0 h-0.5 rounded-full"
       />
 
@@ -81,7 +120,7 @@ function Slider({ min, max, value, onChange }) {
             dragControls.start(event, { snapToCursor: true });
             let { left, width } = fullBarRef.current.getBoundingClientRect();
             let position = event.pageX - left;
-            let newProgress = clamp(position, 0, width) / width;
+            let newProgress = position / width;
             onChange(newProgress * (max - min));
           }}
         >
@@ -95,31 +134,31 @@ function Slider({ min, max, value, onChange }) {
         />
       </div>
 
-      {/* <div className="absolute inset-0 flex items-center h-0.5"> */}
       <motion.button
-        data-test="slider-scrubber"
+        data-test="slider-handle"
+        ref={handleRef}
         drag="x"
-        whileDrag={{ scale: 2 }}
-        dragConstraints={constraintsRef}
+        whileDrag={{ scale: 1 }}
+        dragConstraints={{ left: 0, right: fullBarWidth }}
         dragControls={dragControls}
         dragElastic={0}
         dragMomentum={false}
         onDrag={handleDrag}
-        className="absolute bg-red-500 rounded-full cursor-grab active:cursor-grabbing"
+        className="bg-red-500 rounded-full opacity-50 cursor-grab active:cursor-grabbing"
         style={{
-          x: scrubberX,
-          top: -buttonSize / 2,
+          x: handleX,
           width: buttonSize,
           height: buttonSize,
+          scale: 0.5,
         }}
       />
-      {/* </div> */}
     </div>
   );
 }
 
-function clamp(number, min, max) {
-  return Math.max(min, Math.min(number, max));
-}
+function getProgressFromX({ x, containerRef }) {
+  let bounds = containerRef.current.getBoundingClientRect();
+  let progress = (x - bounds.x) / bounds.width;
 
-// function getProgressFrom
+  return progress;
+}
