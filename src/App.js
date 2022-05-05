@@ -1,4 +1,10 @@
-import { motion, useDragControls, useMotionValue } from "framer-motion";
+import {
+  motion,
+  useDragControls,
+  useMotionTemplate,
+  useMotionValue,
+  useTransform,
+} from "framer-motion";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 // import useSize from "@react-hook/size";
 import useResizeObserver from "@react-hook/resize-observer";
@@ -6,15 +12,19 @@ import useResizeObserver from "@react-hook/resize-observer";
 import useMeasure from "react-use-measure";
 
 let useBounds = (target) => {
-  let [size, setSize] = useState();
+  let [bounds, setBounds] = useState();
 
   useLayoutEffect(() => {
-    setSize(target.current.getBoundingClientRect());
+    setBounds(target.current.getBoundingClientRect());
   }, [target]);
 
   // Where the magic happens
-  useResizeObserver(target, (entry) => setSize(entry.contentRect));
-  return size;
+  useResizeObserver(target, (entry) => {
+    // console.log(entry);
+    setBounds(target.current.getBoundingClientRect());
+  });
+
+  return bounds;
 };
 
 export default function App() {
@@ -57,14 +67,19 @@ export default function App() {
 
 function Slider({ min, max, value, onChange }) {
   let handleRef = useRef();
-  let buttonSize = 60;
+  // let constraintsRef = useRef();
+  // let buttonSize = 60;
   let handleX = useMotionValue();
   let dragControls = useDragControls();
   // let [fullBarRef, fullBarBounds] = useMeasure();
   let fullBarRef = useRef();
   let fullBarBounds = useBounds(fullBarRef);
-  let handleBounds = useBounds(handleRef);
+  // let handleBounds = useBounds(handleRef);
   let fullBarWidth = fullBarBounds?.width;
+  let progressWidth = useTransform(handleX, (v) => {
+    // console.log(handleRef.current?.clientWidth);
+    return v + handleRef.current?.clientWidth / 2;
+  });
 
   function handleDrag() {
     // Old
@@ -73,44 +88,55 @@ function Slider({ min, max, value, onChange }) {
     // let newProgress = clamp(position, 0, width) / width;
     // onChange(newProgress * (max - min));
 
+    // console.log(handleBounds);
     // New
     let handleBounds = handleRef.current.getBoundingClientRect();
     // console.log({ handleBounds });
     let middleOfHandle = handleBounds.x + handleBounds.width / 2;
+    console.log({ width: handleBounds.width });
+    // let middleOfHandle = handleBounds.x;
+    // console.log({ middleOfHandle });
     // console.log({ middleOfHandle });
     // let newProgress = getProgressFromX({
     //   containerRef: fullBarRef,
     //   x: middleOfHandle,
     // });
+    let leftOfProgress =
+      fullBarRef.current.getBoundingClientRect().x + handleBounds.width / 2;
+    // console.log({ leftOfProgress });
 
-    let newProgress = (middleOfHandle - 0) / fullBarWidth;
+    let newProgress =
+      (middleOfHandle -
+        (fullBarRef.current.getBoundingClientRect().x +
+          handleBounds.width / 2)) /
+      (fullBarWidth - handleBounds.width);
+    // console.log({ newProgress });
 
     onChange(newProgress * (max - min));
   }
 
   useLayoutEffect(() => {
+    let handleBounds = handleRef.current.getBoundingClientRect();
     let newProgress = value / (max - min);
-    let newX = newProgress * fullBarWidth;
 
-    if (handleX.get() !== newX) {
-      handleX.set(newProgress * fullBarWidth);
-    }
+    handleX.set(newProgress * (fullBarWidth - handleBounds.width));
   }, [value, handleX, max, min, fullBarWidth]);
 
   return (
     <div
       data-test="slider"
       className="relative flex items-center"
-      style={{ marginLeft: -buttonSize / 2, marginRight: -buttonSize / 2 }}
+      // style={{ marginLeft: -buttonSize / 2, marginRight: -buttonSize / 2 }}
     >
-      <div
+      {/* <div
         data-test="slider-constraints"
+        ref={constraintsRef}
         className="absolute inset-x-0 h-0.5 rounded-full"
-      />
+      /> */}
 
       <div
-        className="absolute flex items-center"
-        style={{ left: buttonSize / 2, right: buttonSize / 2 }}
+        className="absolute inset-x-0 flex items-center"
+        // style={{ left: buttonSize / 2, right: buttonSize / 2 }}
       >
         <div
           data-test="slider-background"
@@ -127,31 +153,36 @@ function Slider({ min, max, value, onChange }) {
           <div className="w-full h-0.5 bg-gray-300 rounded-full" />
         </div>
 
-        <div
+        <motion.div
           data-test="slider-current-progress"
           className="absolute h-0.5 rounded-full bg-gray-700 pointer-events-none"
-          style={{ width: `${(value / (max - min)) * 100}%` }}
+          style={{ left: 0, width: progressWidth }}
         />
       </div>
 
-      <motion.button
+      <motion.div
         data-test="slider-handle"
         ref={handleRef}
         drag="x"
-        whileDrag={{ scale: 1 }}
-        dragConstraints={{ left: 0, right: fullBarWidth }}
+        // whileDrag={{ scale: 5 }}
+        // dragConstraints={{ left: 0 }}
+        // dragConstraints={{ left: 0, right: fullBarWidth }}
+        // dragConstraints={constraintsRef}
+        dragConstraints={fullBarRef}
         dragControls={dragControls}
         dragElastic={0}
         dragMomentum={false}
         onDrag={handleDrag}
-        className="bg-red-500 rounded-full opacity-50 cursor-grab active:cursor-grabbing"
+        className="w-8 h-8 bg-red-500 rounded-full opacity-50 cursor-grab active:cursor-grabbing"
         style={{
           x: handleX,
-          width: buttonSize,
-          height: buttonSize,
-          scale: 0.5,
+          // width: buttonSize,
+          // height: buttonSize,
+          // scale: 0.5,
         }}
-      />
+      >
+        <div></div>
+      </motion.div>
     </div>
   );
 }
