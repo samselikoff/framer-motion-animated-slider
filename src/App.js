@@ -19,10 +19,10 @@ export default function App() {
   return (
     <div>
       <div className="px-8 mt-10">
-        {/* <Slider min={0} max={10} value={one} onChange={setOne} />
-        <p>{Math.floor(one)}</p> */}
+        <Slider min={0} max={10} value={one} onChange={setOne} />
+        <p className="mt-3 text-3xl">{Math.floor(one)}</p>
         <Slider min={0} max={100} value={two} onChange={setTwo} />
-        <p>{Math.floor(two)}</p>
+        <p className="mt-2 text-3xl">{Math.floor(two)}</p>
       </div>
     </div>
   );
@@ -33,8 +33,9 @@ function Slider({ min, max, value, onChange }) {
   let progressBarRef = useRef();
   let constraintsRef = useRef();
   let dragControls = useDragControls();
-  let handleSize = 20;
+  let handleSize = 40;
   let handleOverflow = 0;
+
   let handleX = useMotionValue(0);
   let progressWidth = useTransform(handleX, (v) => v + handleSize / 2);
   let background = useMotionTemplate`linear-gradient(90deg, #374151 ${progressWidth}px, #d1d5db 0)`;
@@ -65,18 +66,8 @@ function Slider({ min, max, value, onChange }) {
     >
       <motion.div
         data-test="slider-background"
-        className="absolute inset-x-0 h-2 rounded-full"
+        className="absolute inset-x-0 h-6 rounded-full"
         style={{ background }}
-        // style={{
-        //   background: `linear-gradient(90deg, #374151 calc(${
-        //     (value / (max - min)) * 100
-        //   }% + 5px), #d1d5db 0)`,
-        // }}
-        // style={{
-        //   background: `linear-gradient(90deg, #374151 calc(${
-        //     (value / (max - min)) * 100
-        //   }% + 5px), #d1d5db 0)`,
-        // }}
       />
 
       <div
@@ -104,7 +95,7 @@ function Slider({ min, max, value, onChange }) {
           dragMomentum={false}
           onDrag={handleDrag}
           transition={{ type: "tween", duration: 0.15 }}
-          className="relative z-10 bg-red-500 rounded-full opacity-50 cursor-grab active:cursor-grabbing"
+          className="relative z-10 bg-red-500 rounded-full cursor-grab active:cursor-grabbing"
           style={{
             x: handleX,
             width: handleSize,
@@ -131,6 +122,7 @@ function Slider({ min, max, value, onChange }) {
 function clamp(number, min, max) {
   return Math.max(min, Math.min(number, max));
 }
+
 function useInterval(callback, delay) {
   const intervalRef = useRef(null);
   const savedCallback = useRef(callback);
