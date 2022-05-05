@@ -67,8 +67,9 @@ export default function App() {
 
 function Slider({ min, max, value, onChange }) {
   let handleRef = useRef();
-  // let constraintsRef = useRef();
-  // let buttonSize = 60;
+  let constraintsRef = useRef();
+  let handleSize = 30;
+  let scaledHandleSize = 60;
   let handleX = useMotionValue();
   let dragControls = useDragControls();
   // let [fullBarRef, fullBarBounds] = useMeasure();
@@ -76,10 +77,8 @@ function Slider({ min, max, value, onChange }) {
   let fullBarBounds = useBounds(fullBarRef);
   // let handleBounds = useBounds(handleRef);
   let fullBarWidth = fullBarBounds?.width;
-  let progressWidth = useTransform(handleX, (v) => {
-    // console.log(handleRef.current?.clientWidth);
-    return v + handleRef.current?.clientWidth / 2;
-  });
+  // let progressWidth = useTransform(handleX, (v) => v);
+  let progressWidth = useTransform(handleX, (v) => v + handleSize / 2);
 
   function handleDrag() {
     // Old
@@ -93,7 +92,8 @@ function Slider({ min, max, value, onChange }) {
     let handleBounds = handleRef.current.getBoundingClientRect();
     // console.log({ handleBounds });
     let middleOfHandle = handleBounds.x + handleBounds.width / 2;
-    console.log({ width: handleBounds.width });
+    console.log({ middleOfHandle });
+    // console.log({ width: handleBounds.width });
     // let middleOfHandle = handleBounds.x;
     // console.log({ middleOfHandle });
     // console.log({ middleOfHandle });
@@ -101,25 +101,26 @@ function Slider({ min, max, value, onChange }) {
     //   containerRef: fullBarRef,
     //   x: middleOfHandle,
     // });
-    let leftOfProgress =
-      fullBarRef.current.getBoundingClientRect().x + handleBounds.width / 2;
+    // let leftOfProgress =
+    //   fullBarRef.current.getBoundingClientRect().x + handleWidth / 2;
     // console.log({ leftOfProgress });
 
     let newProgress =
       (middleOfHandle -
-        (fullBarRef.current.getBoundingClientRect().x +
-          handleBounds.width / 2)) /
-      (fullBarWidth - handleBounds.width);
+        (fullBarRef.current.getBoundingClientRect().x + handleSize / 2)) /
+      (fullBarWidth - handleSize);
     // console.log({ newProgress });
 
     onChange(newProgress * (max - min));
   }
 
   useLayoutEffect(() => {
-    let handleBounds = handleRef.current.getBoundingClientRect();
+    // let handleBounds = handleRef.current.getBoundingClientRect();
+    let handleWidth = handleRef.current.clientWidth;
     let newProgress = value / (max - min);
 
-    handleX.set(newProgress * (fullBarWidth - handleBounds.width));
+    console.log(handleWidth);
+    handleX.set(newProgress * (fullBarWidth - handleWidth));
   }, [value, handleX, max, min, fullBarWidth]);
 
   return (
@@ -128,15 +129,15 @@ function Slider({ min, max, value, onChange }) {
       className="relative flex items-center"
       // style={{ marginLeft: -buttonSize / 2, marginRight: -buttonSize / 2 }}
     >
-      {/* <div
+      <div
         data-test="slider-constraints"
         ref={constraintsRef}
         className="absolute inset-x-0 h-0.5 rounded-full"
-      /> */}
+      />
 
       <div
         className="absolute inset-x-0 flex items-center"
-        // style={{ left: buttonSize / 2, right: buttonSize / 2 }}
+        style={{ left: handleSize / 2, right: handleSize / 2 }}
       >
         <div
           data-test="slider-background"
@@ -164,21 +165,22 @@ function Slider({ min, max, value, onChange }) {
         data-test="slider-handle"
         ref={handleRef}
         drag="x"
-        // whileDrag={{ scale: 5 }}
+        // whileDrag={{ scale: 1 }}
         // dragConstraints={{ left: 0 }}
         // dragConstraints={{ left: 0, right: fullBarWidth }}
-        // dragConstraints={constraintsRef}
-        dragConstraints={fullBarRef}
+        dragConstraints={constraintsRef}
+        // dragConstraints={fullBarRef}
         dragControls={dragControls}
         dragElastic={0}
         dragMomentum={false}
         onDrag={handleDrag}
-        className="w-8 h-8 bg-red-500 rounded-full opacity-50 cursor-grab active:cursor-grabbing"
+        className="relative bg-red-500 rounded-full opacity-50 cursor-grab active:cursor-grabbing"
+        transition={{ type: "tween", duration: 0.15 }}
         style={{
           x: handleX,
-          // width: buttonSize,
-          // height: buttonSize,
-          // scale: 0.5,
+          width: scaledHandleSize,
+          height: scaledHandleSize,
+          scale: handleSize / scaledHandleSize,
         }}
       >
         <div></div>
