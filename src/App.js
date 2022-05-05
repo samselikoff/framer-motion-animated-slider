@@ -68,40 +68,49 @@ export default function App() {
 function Slider({ min, max, value, onChange }) {
   let handleRef = useRef();
   let constraintsRef = useRef();
-  let handleSize = 20;
-  let scaledHandleSize = 60;
-  let handleX = useMotionValue(0);
+  let handleSize = 30;
+  let scaledHandleSize = 30;
+  let handleX = useMotionValue(-(scaledHandleSize - handleSize) / 2);
   let dragControls = useDragControls();
   let fullBarRef = useRef();
   let fullBarBounds = useBounds(fullBarRef);
   let fullBarWidth = fullBarBounds?.width;
-  let progressWidth = useTransform(handleX, (v) => v + handleSize / 2);
+  let progressWidth = useTransform(handleX, (v) => v + handleSize);
+  let progressBarRef = useRef();
 
   function handleDrag() {
     let handleBounds = handleRef.current.getBoundingClientRect();
     let middleOfHandle = handleBounds.x + handleBounds.width / 2;
-
+    let progressBarBounds = progressBarRef.current.getBoundingClientRect();
     let newProgress =
-      (middleOfHandle -
-        (fullBarRef.current.getBoundingClientRect().x + handleSize / 2)) /
-      (fullBarWidth - handleSize);
+      (middleOfHandle - progressBarBounds.x) / progressBarBounds.width;
 
     onChange(newProgress * (max - min));
   }
 
-  // useLayoutEffect(() => {
-  //   let handleWidth = handleRef.current.clientWidth;
-  //   let newProgress = value / (max - min);
+  useLayoutEffect(() => {
+    let newProgress = value / (max - min);
+    let progressBarBounds = progressBarRef.current.getBoundingClientRect();
+    let middleOfHandle = newProgress * progressBarBounds.width;
 
-  //   handleX.set(newProgress * (fullBarWidth - handleWidth));
-  // }, [value, handleX, max, min, fullBarWidth]);
+    handleX.set(middleOfHandle - (scaledHandleSize - handleSize) / 2);
+  }, [handleSize, handleX, max, min, scaledHandleSize, value]);
 
   return (
     <div data-test="slider" className="relative flex items-center">
       <div
         data-test="slider-constraints"
         ref={constraintsRef}
-        className=" absolute inset-x-0 h-0.5 rounded-full"
+        className=" absolute h-0.5 rounded-full"
+        // style={{ left: -handleSize / 2, right: -handleSize / 2 }}
+        // style={{
+        //   left: 0,
+        //   right: 0,
+        // }}
+        style={{
+          left: -((scaledHandleSize - handleSize) / 2),
+          right: -((scaledHandleSize - handleSize) / 2),
+        }}
       />
 
       <div
@@ -123,25 +132,33 @@ function Slider({ min, max, value, onChange }) {
           <div className="w-full h-0.5 bg-gray-300 rounded-full" />
         </div>
 
-        <motion.div
+        {/* <motion.div
           data-test="slider-current-progress"
           className="absolute h-0.5 rounded-full bg-gray-700 pointer-events-none"
           style={{ left: 0, width: progressWidth }}
-        />
+        /> */}
       </div>
+
+      <div
+        data-test="slider-progress"
+        ref={progressBarRef}
+        className="absolute h-1 bg-blue-500"
+        style={{ left: handleSize / 2, right: handleSize / 2 }}
+      ></div>
 
       <motion.div
         data-test="slider-handle"
         ref={handleRef}
-        // drag="x"
-        // whileDrag={{ scale: 1 }}
-        // dragConstraints={constraintsRef}
-        // dragControls={dragControls}
-        // dragElastic={0}
-        // dragMomentum={false}
-        // onDrag={handleDrag}
+        drag="x"
+        whileDrag={{ scale: 1 }}
+        dragConstraints={constraintsRef}
+        // dragConstraints={{ left: -handleSize / 2 }}
+        dragControls={dragControls}
+        dragElastic={0}
+        dragMomentum={false}
+        onDrag={handleDrag}
+        transition={{ type: "tween", duration: 0.15 }}
         className="relative bg-red-500 rounded-full opacity-50 cursor-grab active:cursor-grabbing"
-        // transition={{ type: "tween", duration: 0.15 }}
         style={{
           x: handleX,
           width: scaledHandleSize,
@@ -155,9 +172,4 @@ function Slider({ min, max, value, onChange }) {
   );
 }
 
-// function getProgressFromX({ x, containerRef }) {
-//   let bounds = containerRef.current.getBoundingClientRect();
-//   let progress = (x - bounds.x) / bounds.width;
-
-//   return progress;
-// }
+function getProgressFromX({ x, containerRef }) {}
