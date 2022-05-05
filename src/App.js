@@ -1,6 +1,7 @@
 import {
   motion,
   useDragControls,
+  useMotionTemplate,
   useMotionValue,
   useTransform,
 } from "framer-motion";
@@ -18,10 +19,10 @@ export default function App() {
   return (
     <div>
       <div className="px-8 mt-10">
-        <Slider min={0} max={10} value={one} onChange={setOne} />
-        <p>{one}</p>
+        {/* <Slider min={0} max={10} value={one} onChange={setOne} />
+        <p>{Math.floor(one)}</p> */}
         <Slider min={0} max={100} value={two} onChange={setTwo} />
-        <p>{two}</p>
+        <p>{Math.floor(two)}</p>
       </div>
     </div>
   );
@@ -31,11 +32,12 @@ function Slider({ min, max, value, onChange }) {
   let handleRef = useRef();
   let progressBarRef = useRef();
   let constraintsRef = useRef();
-  let handleSize = 20;
-  let handleOverflow = 5;
-  let handleX = useMotionValue(0);
   let dragControls = useDragControls();
+  let handleSize = 20;
+  let handleOverflow = 0;
+  let handleX = useMotionValue(0);
   let progressWidth = useTransform(handleX, (v) => v + handleSize / 2);
+  let background = useMotionTemplate`linear-gradient(90deg, #374151 ${progressWidth}px, #d1d5db 0)`;
 
   function handleDrag() {
     let handleBounds = handleRef.current.getBoundingClientRect();
@@ -47,7 +49,7 @@ function Slider({ min, max, value, onChange }) {
     onChange(newProgress * (max - min));
   }
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     let newProgress = value / (max - min);
     let progressBarBounds = progressBarRef.current.getBoundingClientRect();
     let middleOfHandle = newProgress * progressBarBounds.width;
@@ -57,18 +59,24 @@ function Slider({ min, max, value, onChange }) {
   }, [handleX, max, min, value]);
 
   return (
-    <div data-test="slider" className="relative flex items-center w-full">
-      <div
+    <div
+      data-test="slider"
+      className="relative flex flex-col justify-center w-full"
+    >
+      <motion.div
         data-test="slider-background"
-        className="absolute inset-x-0 h-1 bg-gray-300 rounded-full"
-      />
-
-      <div
-        data-test="slider-progress"
-        className="absolute h-1 bg-gray-700 rounded-full pointer-events-none"
-        style={{ width: `${(value / (max - min)) * 100}%` }}
-        // style={{ width: handleX }}
-        // style={{ right: handleX }}
+        className="absolute inset-x-0 h-2 rounded-full"
+        style={{ background }}
+        // style={{
+        //   background: `linear-gradient(90deg, #374151 calc(${
+        //     (value / (max - min)) * 100
+        //   }% + 5px), #d1d5db 0)`,
+        // }}
+        // style={{
+        //   background: `linear-gradient(90deg, #374151 calc(${
+        //     (value / (max - min)) * 100
+        //   }% + 5px), #d1d5db 0)`,
+        // }}
       />
 
       <div
@@ -81,14 +89,9 @@ function Slider({ min, max, value, onChange }) {
         }}
       />
 
-      {/* <div
-        style={{ marginLeft: -handleOverflow, marginRight: -handleOverflow }}
-        className="h-1 bg-green-500/50"
-      ></div> */}
-
       <div
-        style={{ left: -handleOverflow, right: -handleOverflow }}
-        className="absolute"
+        style={{ marginLeft: -handleOverflow, marginRight: -handleOverflow }}
+        className="flex"
         ref={constraintsRef}
       >
         <motion.div
@@ -101,7 +104,7 @@ function Slider({ min, max, value, onChange }) {
           dragMomentum={false}
           onDrag={handleDrag}
           transition={{ type: "tween", duration: 0.15 }}
-          className="relative z-10 bg-red-500 rounded-full cursor-grab active:cursor-grabbing"
+          className="relative z-10 bg-red-500 rounded-full opacity-50 cursor-grab active:cursor-grabbing"
           style={{
             x: handleX,
             width: handleSize,
@@ -112,7 +115,7 @@ function Slider({ min, max, value, onChange }) {
 
       <div
         data-test="slider-clickable-area"
-        className="relative w-full py-2"
+        className="absolute z-0 w-full py-2 cursor-grab"
         onPointerDown={(event) => {
           let { left, width } = progressBarRef.current.getBoundingClientRect();
           let position = event.pageX - left;
