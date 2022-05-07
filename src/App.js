@@ -73,7 +73,7 @@ export default function App() {
             onPointerDown={() => setDragging(true)}
             onPointerUp={() => setDragging(false)}
             animate={{
-              scale: dragging ? 2.5 : 1,
+              scale: dragging ? 2 : 1,
             }}
             style={{
               width: handleSize,
