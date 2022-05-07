@@ -40,7 +40,7 @@ export default function App() {
   }, [handleX, max, min, value]);
 
   return (
-    <div className="p-8">
+    <div className="max-w-xl p-8 mx-auto">
       <div data-test="slider" className="relative flex flex-col justify-center">
         <motion.div
           data-test="slider-background"
@@ -98,7 +98,10 @@ export default function App() {
         />
       </div>
 
-      <motion.div animate={{ y: dragging && percent < 0.15 ? 20 : 0 }}>
+      <motion.div
+        className="text-xl"
+        animate={{ y: dragging && percent < 0.15 ? 20 : 0 }}
+      >
         {Math.floor(value * 100) / 100}
       </motion.div>
     </div>
