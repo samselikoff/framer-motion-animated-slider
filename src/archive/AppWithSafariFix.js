@@ -10,6 +10,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import useResizeObserver from "@react-hook/resize-observer";
 
 import useMeasure from "react-use-measure";
+import clamp from "../utils/clamp";
 
 let useBounds = (target) => {
   let [bounds, setBounds] = useState();
@@ -141,8 +142,4 @@ function Slider({ min, max, value, onChange }) {
       </motion.div>
     </div>
   );
-}
-
-function clamp(number, min, max) {
-  return Math.max(min, Math.min(number, max));
 }
