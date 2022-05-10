@@ -7,6 +7,8 @@ import {
 } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
+import clamp from "../utils/clamp";
+
 export default function App() {
   let min = 0;
   let max = 100;
@@ -110,8 +112,4 @@ export default function App() {
       </div>
     </div>
   );
-}
-
-function clamp(number, min, max) {
-  return Math.max(min, Math.min(number, max));
 }

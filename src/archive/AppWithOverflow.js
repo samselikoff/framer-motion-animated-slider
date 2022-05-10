@@ -5,7 +5,9 @@ import {
   useMotionValue,
   useTransform,
 } from "framer-motion";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+import clamp from "../utils/clamp";
 
 export default function App() {
   let [one, setOne] = useState(0);
@@ -117,24 +119,4 @@ function Slider({ min, max, value, onChange }) {
       ></div>
     </div>
   );
-}
-
-function clamp(number, min, max) {
-  return Math.max(min, Math.min(number, max));
-}
-
-function useInterval(callback, delay) {
-  const intervalRef = useRef(null);
-  const savedCallback = useRef(callback);
-  useEffect(() => {
-    savedCallback.current = callback;
-  }, [callback]);
-  useEffect(() => {
-    const tick = () => savedCallback.current();
-    if (typeof delay === "number") {
-      intervalRef.current = window.setInterval(tick, delay);
-      return () => window.clearInterval(intervalRef.current);
-    }
-  }, [delay]);
-  return intervalRef;
 }
